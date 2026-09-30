@@ -172,6 +172,9 @@ fly deploy --ha=false
 fly certs add <domain>
 ```
 
+Live at https://policy.dailyfriend.co.uk: a CNAME `policy` → `dailyfriend-policy-builder.fly.dev` in
+GoDaddy, with the certificate from `fly certs add`. Every push to `main` deploys through CI.
+
 Check `https://<app>.fly.dev/api/health` (process up) and `/api/ready` (Mistral key works). Mistral
 keys expire: when `/api/ready` returns 503 with `credential_rejected`, replace the key.
 
