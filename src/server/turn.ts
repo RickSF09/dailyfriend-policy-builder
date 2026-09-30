@@ -14,7 +14,6 @@ import { UserFacingError } from './errors.js';
 import { chargeTokens, estimateTokens } from './limits.js';
 import { type ChatMessage, jsonCall } from './mistral.js';
 import { TURN_SYSTEM } from './prompts/turn.js';
-import { TOOLS } from '../shared/knowledge.generated.js';
 
 const MAX_OUTPUT = 600;
 const MAX_REPLY = 700;
@@ -53,7 +52,7 @@ const ACCOUNT_WORDS = /\b(account|plan|personal|free|paid|business|team|enterpri
  * Rules the model does not always keep, enforced here:
  *  - once the answer is recorded, the page asks the next question, so a
  *    question in the reply would be asked twice;
- *  - a risk is only mentioned when this message names a tool or account, and
+ *  - a risk is only mentioned when this message mentions an account or plan, and
  *    never again once an earlier reply has mentioned it.
  */
 export function tidyReply(
@@ -63,8 +62,10 @@ export function tidyReply(
   answered: boolean,
 ): string {
   const earlier = history.filter((m) => m.role === 'assistant').map((m) => m.content);
-  const namesTool = (s: string) => TOOLS.filter((t) => s.toLowerCase().includes(t.name.toLowerCase()));
-  const mentionsAccount = namesTool(message).length > 0 || ACCOUNT_WORDS.test(message);
+  // The risk is about the account, not the tool: "claude we're still thinking
+  // about" is no reason to warn again, and the first warning may be older
+  // than the history the page sends.
+  const mentionsAccount = ACCOUNT_WORDS.test(message);
   const sentences = reply.match(/[^.!?]+[.!?]*\s*/g) ?? [];
   const kept = sentences.filter((s) => {
     if (answered && s.trim().endsWith('?')) return false;

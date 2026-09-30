@@ -32,6 +32,17 @@ describe('tidyReply', () => {
     expect(r).toBe('Thank you.');
   });
 
+  it('does not warn when a tool is named without any account', () => {
+    expect(
+      tidyReply(
+        'Noted. Using Claude on personal accounts carries a risk.',
+        "copilot yes, claude we're still thinking about",
+        [],
+        true,
+      ),
+    ).toBe('Noted.');
+  });
+
   it('does not repeat the point in other words', () => {
     const general = [
       {
