@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand: #296cd8;
+  --color-brand-dark: #1d4fa3;
+  --color-brand-soft: #eaf1fc;
+  --color-leaf: #77c566;
+  --color-leaf-soft: #edf7ea;
+  --color-ink: #1b2330;
+  --color-muted: #5a6474;
+  --color-line: #dfe4ec;
+  --color-paper: #f7f9fc;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+.gap-marker {
+  background: #fff3c4;
+  border-radius: 0.25rem;
+  padding: 0 0.2rem;
+  font-weight: 600;
+}
+
+@keyframes typing {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  animation: typing 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@media print {
+  html,
+  body {
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-break {
+    break-before: page;
+  }
+  .policy-page {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}

@@ -1,0 +1,6 @@
+dist
+node_modules
+eval/out
+eval/fixtures
+package-lock.json
+src/shared/knowledge.generated.ts

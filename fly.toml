@@ -1,0 +1,40 @@
+# DailyFriend AI policy builder on Fly.io, London.
+#
+# Stateless: no volume, no database. Answers exist only in memory while a
+# request is being handled. Secrets:
+#   fly secrets set MISTRAL_API_KEY=...
+#   fly secrets set WORKSHOP_CODES=code-for-this-workshop   (optional)
+
+app = 'dailyfriend-policy-builder'
+primary_region = 'lhr'
+
+[env]
+  NODE_ENV = 'production'
+  PORT = '8080'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Suspend when idle and wake on the next visit (about a second). On a
+  # workshop day, keep one machine warm first:  fly scale count 1 && fly
+  # machine update <id> --autostop=off  (and switch it back afterwards).
+  auto_stop_machines = 'suspend'
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = 'requests'
+    soft_limit = 40
+    hard_limit = 60
+
+  [[http_service.checks]]
+    grace_period = '10s'
+    interval = '30s'
+    method = 'GET'
+    path = '/api/health'
+    timeout = '5s'
+
+[[vm]]
+  # No document processing here: requests are small JSON and a model call.
+  size = 'shared-cpu-1x'
+  memory = '512mb'
