@@ -630,6 +630,8 @@ export const SLOTS: Slot[] = [
       { id: 'monthly', label: 'Monthly' },
       { id: 'quarterly', label: 'Every three months' },
     ],
+    // No one to do the checking yet: "how often will they" has no "they".
+    when: (a) => !isUnsure(a.checker) && !isNobody(text(a, 'checker')),
   },
   {
     id: 'reportTo',

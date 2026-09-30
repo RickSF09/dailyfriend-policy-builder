@@ -14,6 +14,7 @@ import { UserFacingError } from './errors.js';
 import { chargeTokens, estimateTokens } from './limits.js';
 import { type ChatMessage, jsonCall } from './mistral.js';
 import { TURN_SYSTEM } from './prompts/turn.js';
+import { TOOLS } from '../shared/knowledge.generated.js';
 
 const MAX_OUTPUT = 600;
 const MAX_REPLY = 700;
@@ -43,6 +44,39 @@ function allowedIds(current: Slot, a: Answers): Set<string> {
     if (a[s.id] === undefined && s.kind !== 'multi' && !s.askDirectly) ids.add(s.id);
   }
   return ids;
+}
+
+const RISK = /data processing agreement|personal (plan|account)|trains? (its|on)/i;
+const ACCOUNT_WORDS = /\b(account|plan|personal|free|paid|business|team|enterprise|pro|plus)\b/i;
+
+/**
+ * Rules the model does not always keep, enforced here:
+ *  - once the answer is recorded, the page asks the next question, so a
+ *    question in the reply would be asked twice;
+ *  - a risk is only mentioned when this message names a tool or account, and
+ *    never again once an earlier reply has mentioned it.
+ */
+export function tidyReply(
+  reply: string,
+  message: string,
+  history: { role: string; content: string }[],
+  answered: boolean,
+): string {
+  const earlier = history.filter((m) => m.role === 'assistant').map((m) => m.content);
+  const namesTool = (s: string) => TOOLS.filter((t) => s.toLowerCase().includes(t.name.toLowerCase()));
+  const mentionsAccount = namesTool(message).length > 0 || ACCOUNT_WORDS.test(message);
+  const sentences = reply.match(/[^.!?]+[.!?]*\s*/g) ?? [];
+  const kept = sentences.filter((s) => {
+    if (answered && s.trim().endsWith('?')) return false;
+    if (!RISK.test(s)) return true;
+    if (!mentionsAccount) return false;
+    const tools = namesTool(s);
+    const said = earlier.some(
+      (e) => RISK.test(e) && (!tools.length || tools.some((t) => e.includes(t.name))),
+    );
+    return !said;
+  });
+  return kept.join('').trim();
 }
 
 export async function runTurn(req: TurnRequest): Promise<TurnResponse> {
@@ -115,8 +149,13 @@ export async function runTurn(req: TurnRequest): Promise<TurnResponse> {
     if (Array.isArray(clean)) suggested[id] = clean;
   }
 
-  let reply = typeof raw.reply === 'string' ? raw.reply.trim().slice(0, MAX_REPLY) : '';
   const answered = values[current.id] !== undefined;
+  let reply = tidyReply(
+    typeof raw.reply === 'string' ? raw.reply.trim().slice(0, MAX_REPLY) : '',
+    req.message,
+    req.history,
+    answered,
+  );
   if (!reply)
     reply = answered ? 'Thank you.' : 'Sorry, I did not quite follow. Could you put that another way?';
   return { reply, values, suggested, stay: !answered };

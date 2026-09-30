@@ -743,7 +743,7 @@ function rolesSection(a: Answers): Section {
           ],
           [
             'Everyone using AI',
-            'All staff and volunteers',
+            capitalise(workforce(a)),
             'Uses approved tools only, checks their own AI drafts, and reports problems.',
           ],
         ],

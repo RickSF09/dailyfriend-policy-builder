@@ -18,6 +18,7 @@ import {
 } from '../interview.js';
 import type { Action } from './types.js';
 import {
+  capitalise,
   chosenTools,
   formatDate,
   hubLink,
@@ -286,7 +287,7 @@ export function buildActions(a: Answers, today: Date): Action[] {
       id: 'breach-procedure',
       priority: 'soon',
       title: 'Write a short data breach procedure',
-      why: `The policy relies on one. It needs to say who decides whether a breach is reportable to the ICO, how that decision is recorded, and how the 72-hour deadline is met. ${lead} should own it.`,
+      why: `The policy relies on one. It needs to say who decides whether a breach is reportable to the ICO, how that decision is recorded, and how the 72-hour deadline is met. ${capitalise(lead)} should own it.`,
     });
   }
 

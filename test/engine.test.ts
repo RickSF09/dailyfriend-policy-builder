@@ -72,6 +72,12 @@ describe('role answers', () => {
     expect(coerce(getSlot('checker')!, 'Nobody yet')).toBe(UNSURE);
     expect(coerce(getSlot('checker')!, 'Deputy Manager')).toBe('Deputy Manager');
   });
+
+  it('does not ask how often when nobody spot-checks', () => {
+    expect(ids({ checker: UNSURE })).not.toContain('checkRate');
+    expect(ids({ checker: 'No one right now' })).not.toContain('checkRate');
+    expect(ids({ checker: 'Deputy Manager' })).toContain('checkRate');
+  });
 });
 
 describe('tools already agreed', () => {

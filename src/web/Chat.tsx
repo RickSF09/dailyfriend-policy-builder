@@ -23,7 +23,18 @@ const WITH_ARTICLE: Record<PiiType, string> = {
 };
 
 /** A reply that ends on a question has asked something again, so the page need not. */
-const asksAgain = (reply: string) => /\?\s*$/.test(reply);
+const asksAgain = (reply: string) => {
+  const last =
+    reply
+      .trim()
+      .split(/(?<=[.!?])\s+/)
+      .pop() ?? '';
+  // The model sometimes drops the question mark: "Do you have NHS contracts".
+  return (
+    /\?$/.test(last) ||
+    /^(do|does|did|is|are|was|have|has|what|who|which|how|when|where|can|could|will|would)\b/i.test(last)
+  );
+};
 
 function optionLabel(slot: Slot, id: string): string {
   if (id === UNSURE) return slot.optional ? 'Skip' : 'Not sure';
