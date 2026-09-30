@@ -45,7 +45,7 @@ based on the hub's checked guides and templates; answers only decide which claus
 names, roles and tools. The model does four small jobs: read typed answers, answer a question about
 a term ("what is a DPIA?") from a fixed list of facts, write a purpose paragraph plus one example
 sentence per task, and fit typed answers into the sentences they appear in ("As CEO I review it and
-the board decides" becomes "the board" in "until ___ has approved it", and "CEO reviews; the board
+the board decides" becomes "the board" in "until it has been approved by ___", and "CEO reviews; the board
 decides" in the roles table; their own red lines become clauses of the "never" list). Any tailored
 sentence that mentions a name, place, product or number not found in the answers is dropped, and the
 default wording is used instead: a role answer that is more than a role is then named by its role

@@ -4,7 +4,7 @@
 //    organisation's own setting;
 //  - wording: typed answers (roles, their own red lines, other tasks) fitted
 //    into the sentences the policy puts them in, so "As CEO I review it and
-//    the board decides" never lands in "until ___ has approved it" as typed.
+//    the board decides" never lands in "approved by ___" as typed.
 // Each snippet must pass the grounding check or it is dropped and the fixed
 // wording is used instead.
 
@@ -46,7 +46,7 @@ Answer in JSON only, in exactly this shape:
 const ROLE_SENTENCES: Record<(typeof ROLE_TEXT_SLOTS)[number], string[]> = {
   owner: ['___ keeps this list up to date.', 'Not sure? Ask ___ first.'],
   approver: [
-    'No new AI tool starts until ___ has approved it.',
+    'No new AI tool starts until it has been approved by ___.',
     'Any other use needs agreement from ___ first.',
   ],
   dpLead: ['Ask ___ if you are not sure.', '___ decides whether it must be reported to the ICO.'],

@@ -136,6 +136,27 @@ describe('tool approval', () => {
   });
 });
 
+describe('a plural approver', () => {
+  it('reads correctly with "the directors"', () => {
+    const text = allText(
+      assemblePolicy(
+        {
+          stance: 'approved',
+          approver: 'The directors',
+          tools: ['claude'],
+          'plan:claude': 'business',
+          agreed: ['none'],
+        },
+        {},
+        TODAY,
+      ),
+    );
+    expect(text).toContain('until it has been approved by the directors');
+    expect(text).toContain('Until there is a decision from the directors');
+    expect(text).not.toMatch(/the directors (has|decides)/);
+  });
+});
+
 describe('typed answers in sentences', () => {
   const base = {
     orgName: 'Test',
@@ -159,7 +180,7 @@ describe('typed answers in sentences', () => {
 
   it('keeps a sentence-like answer out of running text when there is no tidied wording', () => {
     const text = allText(assemblePolicy(base, {}, TODAY));
-    expect(text).toContain('until the person who approves new tools (section 3) has approved it');
+    expect(text).toContain('until it has been approved by the person who approves new tools (section 3)');
     expect(text).toContain('\nAs a CEO I review it and bring it to the board to decide\n');
   });
 
@@ -180,13 +201,13 @@ describe('typed answers in sentences', () => {
       redLines: { from: base.redLines, items: ['to make the final decision, especially on care plans'] },
     };
     const text = allText(assemblePolicy(base, { wording }, TODAY));
-    expect(text).toContain('until the board has approved it');
+    expect(text).toContain('until it has been approved by the board');
     expect(text).toContain('CEO reviews; the board decides');
     expect(text).toContain('to make the final decision, especially on care plans');
     expect(text).not.toContain('As a CEO');
     expect(text).not.toContain('escpesially');
 
     const edited = allText(assemblePolicy({ ...base, approver: 'Registered Manager' }, { wording }, TODAY));
-    expect(edited).toContain('until the Registered Manager has approved it');
+    expect(edited).toContain('until it has been approved by the Registered Manager');
   });
 });

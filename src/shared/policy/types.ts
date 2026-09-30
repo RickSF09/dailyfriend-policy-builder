@@ -54,7 +54,7 @@ export interface Snippets {
 export type RoleWording =
   | {
       from: string;
-      /** Fits mid-sentence: "Tell ___ straight away", "until ___ has approved it". */
+      /** Fits mid-sentence: "Tell ___ straight away", "until it has been approved by ___". */
       phrase: string;
       /** Short, for the roles table. */
       cell: string;

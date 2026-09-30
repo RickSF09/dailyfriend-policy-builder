@@ -85,7 +85,10 @@ export function buildActions(a: Answers, today: Date): Action[] {
     add({
       id: 'personal-accounts',
       priority: 'now',
-      title: 'Move work off personal AI accounts',
+      title:
+        a.accountRule === 'general-only'
+          ? 'Tell staff the rules for personal AI accounts'
+          : 'Move work off personal AI accounts',
       why:
         a.accountRule === 'general-only'
           ? 'Personal accounts, free or paid, have no data processing agreement. Under your policy they may only be used for tasks with no information about anyone. Tell staff this in plain words this week, and show them how to check which account they are in.'
@@ -118,7 +121,7 @@ export function buildActions(a: Answers, today: Date): Action[] {
       id: 'decide-tools',
       priority: inUse ? 'now' : 'soon',
       title: `Decide whether to approve ${names}`,
-      why: `The policy lists ${undecided.length > 1 ? 'them' : 'it'} as not approved until ${who(a, 'approver', 'whoever approves new tools')} decides.${inUse ? ' If anyone already uses it for work, tell them to stop until then.' : ''} Go through section 12 first: the supplier questions, a data processing agreement and, before any information about people goes in, a DPIA. Then update section 4.`,
+      why: `The policy lists ${undecided.length > 1 ? 'them' : 'it'} as not approved until there is a decision from ${who(a, 'approver', 'whoever approves new tools')}.${inUse ? ' If anyone already uses it for work, tell them to stop until then.' : ''} Go through section 12 first: the supplier questions, a data processing agreement and, before any information about people goes in, a DPIA. Then update section 4.`,
       link: hubLink('/templates/supplier-questions'),
     });
   }

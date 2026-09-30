@@ -135,7 +135,7 @@ function toolsSection(a: Answers): Section {
       const names = joinList(review.map((r) => r.name));
       blocks.push({
         kind: 'p',
-        text: `**${names} ${review.length > 1 ? 'are' : 'is'} under review.** Until ${who(a, 'approver', 'who approves new tools')} decides, through section 12, nobody uses ${review.length > 1 ? 'them' : 'it'} for work, including anyone who already has an account.`,
+        text: `**${names} ${review.length > 1 ? 'are' : 'is'} under review.** Until there is a decision from ${who(a, 'approver', 'who approves new tools')}, through section 12, nobody uses ${review.length > 1 ? 'them' : 'it'} for work, including anyone who already has an account.`,
       });
     }
     for (const r of rows.filter((x) => x.plan === 'mixed' && x.agreed !== 'no')) {
@@ -552,7 +552,7 @@ function newToolsSection(a: Answers): Section {
   const blocks: Block[] = [
     {
       kind: 'p',
-      text: `No new AI tool, and no new use of an existing one, starts until ${who(a, 'approver', 'who approves new tools')} has approved it. This includes AI features added to software we already use, such as email or our care management system: a new AI feature counts as a new tool.`,
+      text: `No new AI tool, and no new use of an existing one, starts until it has been approved by ${who(a, 'approver', 'who approves new tools')}. This includes AI features added to software we already use, such as email or our care management system: a new AI feature counts as a new tool.`,
     },
     { kind: 'p', text: 'Before any tool is used with information about a person, we:' },
     {
