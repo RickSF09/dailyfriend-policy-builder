@@ -24,6 +24,14 @@ export interface Action {
   link?: { label: string; url: string };
 }
 
+/** A free hub page or tool that helps put the policy into practice. */
+export interface Resource {
+  label: string;
+  url: string;
+  /** What it is for, in one sentence. */
+  text: string;
+}
+
 export interface PolicyDoc {
   orgName: string;
   /** Label and value pairs under the title: version, dates, owner. */
@@ -31,6 +39,8 @@ export interface PolicyDoc {
   sections: Section[];
   summary: { title: string; blocks: Block[] };
   actions: Action[];
+  /** Free help from the hub, shown after the action plan. Not part of the policy. */
+  resources: Resource[];
   /** How many [TO DECIDE] gaps remain, across everything. */
   gaps: number;
 }

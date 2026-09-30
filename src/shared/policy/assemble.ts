@@ -20,7 +20,7 @@ import {
   usesMonitoring,
   usesPersonalData,
 } from '../interview.js';
-import { buildActions } from './actions.js';
+import { buildActions, buildResources } from './actions.js';
 import { type Block, GAP, type PolicyDoc, type Section, type Snippets } from './types.js';
 import {
   capacityLaw,
@@ -851,6 +851,7 @@ export function assemblePolicy(answers: Answers, snippets: Snippets = {}, today 
     sections,
     summary: staffSummary(a),
     actions: buildActions(a, today),
+    resources: buildResources(a),
   };
   return { ...doc, gaps: countGaps(doc) };
 }

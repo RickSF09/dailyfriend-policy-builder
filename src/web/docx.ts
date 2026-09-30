@@ -15,7 +15,13 @@ import {
   WidthType,
 } from 'docx';
 import { runs } from '../shared/policy/runs.js';
-import { type Action, type Block, DISCLAIMER, type PolicyDoc } from '../shared/policy/types.js';
+import {
+  type Action,
+  type Block,
+  DISCLAIMER,
+  type PolicyDoc,
+  type Resource,
+} from '../shared/policy/types.js';
 
 const PRIORITY_TITLE: Record<Action['priority'], string> = {
   now: 'Do now',
@@ -107,6 +113,31 @@ function actions(list: Action[]): Paragraph[] {
   return out;
 }
 
+function resources(list: Resource[]): Paragraph[] {
+  if (!list.length) return [];
+  return [
+    new Paragraph({
+      text: 'Free help from DailyFriend',
+      heading: HeadingLevel.HEADING_1,
+      spacing: { before: 240 },
+    }),
+    ...list.map(
+      (r) =>
+        new Paragraph({
+          bullet: { level: 0 },
+          spacing: { after: 80 },
+          children: [
+            new ExternalHyperlink({
+              link: r.url,
+              children: [new TextRun({ text: r.label, style: 'Hyperlink' })],
+            }),
+            new TextRun({ text: `: ${r.text}` }),
+          ],
+        }),
+    ),
+  ];
+}
+
 export function buildDocx(doc: PolicyDoc): Document {
   const children: (Paragraph | Table)[] = [
     new Paragraph({ text: 'AI use policy', heading: HeadingLevel.TITLE }),
@@ -151,6 +182,7 @@ export function buildDocx(doc: PolicyDoc): Document {
       spacing: { after: 200 },
     }),
     ...actions(doc.actions),
+    ...resources(doc.resources),
     new Paragraph({
       children: [new TextRun({ text: DISCLAIMER, italics: true, size: 18 })],
       spacing: { before: 400 },

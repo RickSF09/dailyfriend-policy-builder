@@ -3,10 +3,11 @@
 // and replies. Every typed answer is checked for personal identifiers first.
 
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp, Check, CircleHelp, Loader2, RotateCcw, ShieldAlert } from 'lucide-react';
+import { ArrowUp, Check, CircleHelp, ExternalLink, Loader2, RotateCcw, ShieldAlert } from 'lucide-react';
 import { LIMITS, matchOption, nextSlot, progress } from '../shared/engine';
 import { list, type Option, type Slot, text, UNSURE } from '../shared/interview';
 import { findPii, type PiiType } from '../shared/pii';
+import { hubLink } from '../shared/policy/words';
 import { sendTurn } from './client';
 import { ask, commit } from './session';
 import type { Message, Session } from './store';
@@ -67,6 +68,7 @@ function looksLikeLabel(t: string): boolean {
 
 export function Chat({ session, update }: { session: Session; update: Update }) {
   const slot = nextSlot(session.answers);
+  const more = slot?.link ? hubLink(slot.link) : undefined;
   const [draft, setDraft] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
@@ -248,6 +250,17 @@ export function Chat({ session, update }: { session: Session; update: Update }) 
                 Why we ask
               </button>
               {showHelp && <p className="mt-2 text-sm text-muted leading-relaxed">{slot.help}</p>}
+              {showHelp && more && (
+                <a
+                  href={more.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Read more: {more.label}
+                  <ExternalLink className="size-3.5" aria-hidden="true" />
+                </a>
+              )}
             </div>
           )}
 

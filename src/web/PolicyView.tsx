@@ -200,6 +200,35 @@ export function PolicyView({
         })}
       </article>
 
+      {doc.resources.length > 0 && (
+        <aside
+          id="resources"
+          aria-labelledby="resources-title"
+          className="mt-6 rounded-2xl border border-line bg-brand-soft/40 p-5 sm:p-8 leading-relaxed"
+        >
+          <h2 id="resources-title" className="text-xl font-bold tracking-tight">
+            Free help from DailyFriend
+          </h2>
+          <p className="mt-1 text-muted">Guides and tools to help put the policy into practice.</p>
+          <ul className="mt-4 space-y-3">
+            {doc.resources.map((r) => (
+              <li key={r.url}>
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-semibold text-brand hover:underline"
+                >
+                  {r.label}
+                  <ExternalLink className="size-3.5" aria-hidden="true" />
+                </a>
+                <p className="text-sm text-ink/85">{r.text}</p>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+
       <p className="mt-6 text-sm italic text-muted">{DISCLAIMER}</p>
 
       <button

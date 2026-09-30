@@ -8,7 +8,11 @@ about their organisation, mostly by tapping, sometimes by typing, and gets back 
    protection, checking, telling people, safeguarding, incidents, new tools, staff, records, review.
 2. **A one-page staff summary.** The version people read. Printed and put on the wall.
 3. **An action plan.** The gaps the answers showed ("staff use personal ChatGPT", "no DPIA"), in
-   priority order, each linked to the guide on the AI in care hub that explains the fix.
+   priority order, each linked to the guide on the AI in care hub that explains the fix, followed by
+   free help from the hub (the one-minute "Can I use AI for this?" check, the anonymiser, the tool
+   directory and more).
+
+Questions link to the hub guide behind them under "Why we ask".
 
 Download as Word (built in the browser) or print to PDF. Built to be used live in a workshop, with
 everyone on their own phone or laptop, and on the website.
@@ -71,8 +75,9 @@ the browser (`matchOption`), so most of a session never reaches the server.
 
 `npm run sync` copies facts from `../../website-v2`: the tool directory (plans, data processing
 agreements, hosting, training on data, each with its `checked` date), the use pages (which tasks
-involve personal data), and the titles of guides and templates the action plan links to. Placeholder
-and draft entries are skipped. Re-run it when the directory changes, and commit the result.
+involve personal data), the site address, and the titles of the guides, templates, use pages and
+tool pages the builder links to. Placeholder and draft entries are skipped, and the sync fails if a
+fixed page it links to (such as `/safe-use/check`) has gone. Re-run it when the directory changes, and commit the result.
 
 The policy wording draws on the hub's guides: writing an AI use policy, the golden rules, safeguarding
 and AI, capacity and consent, telling people you support, what CQC says about AI, do you need a DPIA,

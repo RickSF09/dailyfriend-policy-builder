@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { PERSONAS } from '../eval/personas.js';
 import { assemblePolicy } from '../src/shared/policy/assemble.js';
 import type { Block, PolicyDoc } from '../src/shared/policy/types.js';
-import { rolePhrase } from '../src/shared/policy/words.js';
+import { ANONYMISER_URL, HUB_URL } from '../src/shared/knowledge.generated.js';
+import { getSlot, SLOTS } from '../src/shared/interview.js';
+import { hubLink, rolePhrase } from '../src/shared/policy/words.js';
 
 const TODAY = new Date('2026-09-30T10:00:00Z');
 
@@ -87,6 +89,26 @@ describe('assemblePolicy', () => {
         if (a.link) expect(a.link.url).toMatch(/^https:\/\/.+\/(guides|templates|tools)\/[a-z0-9-]+$/);
       }
     }
+  });
+
+  it('links every question to a hub page that exists', () => {
+    const slots = [...SLOTS, getSlot('agreed')!, getSlot('plan:chatgpt')!];
+    for (const s of slots) if (s.link) expect(hubLink(s.link), s.id).toBeDefined();
+    expect(slots.filter((s) => s.link).length).toBeGreaterThan(10);
+  });
+
+  it('lists free help from the hub, suited to the stance', () => {
+    for (const p of PERSONAS) {
+      const { resources } = assemblePolicy(p.answers, {}, TODAY);
+      expect(resources.length).toBeGreaterThan(1);
+      for (const r of resources) {
+        expect(r.url.startsWith(HUB_URL) || r.url === ANONYMISER_URL).toBe(true);
+        expect(r.text).not.toContain('[TO DECIDE');
+      }
+    }
+    const none = assemblePolicy({ stance: 'none' }, {}, TODAY).resources.map((r) => r.url);
+    expect(none).not.toContain(ANONYMISER_URL);
+    expect(none).toContain(`${HUB_URL}/uses`);
   });
 });
 

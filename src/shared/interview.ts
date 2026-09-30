@@ -44,6 +44,8 @@ export interface Slot {
   questionFor?: (a: Answers) => string | undefined;
   /** "Why we ask", shown on request. */
   help?: string;
+  /** A hub page that explains more, by path. Shown with the help. */
+  link?: string;
   options?: Option[];
   /**
    * Tap-to-answer suggestions for text slots. "$me" means the person's own
@@ -154,6 +156,7 @@ function planSlot(toolId: string): Slot {
     label: toolId === 'other' ? 'Other tools: account' : `${toolName(toolId)}: account`,
     question: `What kind of account is ${name} used on?`,
     help: 'This matters more than the tool itself. Personal plans, free or paid, come without a data processing agreement, so nothing about a person can go into them. Business plans usually come with one.',
+    link: '/guides/free-vs-paid-ai-tools',
     options: [
       { id: 'free', label: 'Free personal account' },
       {
@@ -187,6 +190,7 @@ const AGREED: Slot = {
   question:
     'Which of these has your organisation already agreed staff may use for work? Leave out any you are still considering.',
   help: 'Being used, or planned, is not the same as agreed. A tool you are still considering goes in the policy as under review, and nobody uses it for work until whoever approves new tools has decided.',
+  link: '/tools',
   options: [
     ...TOOLS.map((t) => ({ id: t.id, label: t.name })),
     { id: 'other', label: 'The other tools' },
@@ -322,6 +326,7 @@ export const SLOTS: Slot[] = [
     label: 'Your stance on AI',
     question: 'Which best describes where you want to be with AI?',
     help: 'The government’s guidance says every care provider should have an AI policy, even if the policy is that staff cannot use AI for work. All three are reasonable; the policy follows your choice.',
+    link: '/guides/dhsc-guidance-using-ai-in-adult-social-care',
     options: [
       {
         id: 'none',
@@ -357,6 +362,7 @@ export const SLOTS: Slot[] = [
     question: 'Which AI tools are used now, or do you plan to use? Pick all that apply.',
     when: allowsAi,
     help: 'The policy lists each approved tool by name, with the account it must be used on. "Anything not on the list is not approved" only works if the list exists.',
+    link: '/tools',
     options: [
       ...TOOLS.map((t) => ({ id: t.id, label: t.name })),
       { id: 'other', label: 'Another tool' },
@@ -382,6 +388,7 @@ export const SLOTS: Slot[] = [
     question:
       'Apart from separate AI tools, do any systems you already use have AI features built in, such as your care records or rota software? Pick any that apply.',
     help: 'AI inside software you already pay for counts too, and it often arrives in an update without anyone deciding to use it. It works on information about people, so the same rules apply.',
+    link: '/guides/questions-to-ask-a-supplier',
     options: [
       { id: 'care-records', label: 'Digital care records, e.g. AI summaries or suggested notes' },
       { id: 'emar', label: 'Medication records (eMAR)' },
@@ -412,6 +419,7 @@ export const SLOTS: Slot[] = [
     question:
       'How do you decide whether monitoring or assessment technology is used for a particular person?',
     help: 'Monitoring someone affects their privacy and dignity. It needs their agreement or, where they lack capacity for that decision, a recorded best interests decision, person by person.',
+    link: '/guides/capacity-consent-and-ai',
     options: [
       { id: 'consent', label: 'We ask them and record their agreement' },
       {
@@ -429,6 +437,7 @@ export const SLOTS: Slot[] = [
     label: 'Personal accounts used for work',
     question: 'Do any staff use AI on their own personal accounts or phones for work, even occasionally?',
     help: 'This is the most common gap. A personal account is outside your control entirely, and on screen it looks identical to a work one.',
+    link: '/guides/free-vs-paid-ai-tools',
     options: [
       {
         id: 'yes',
@@ -466,6 +475,7 @@ export const SLOTS: Slot[] = [
     question:
       'Some organisations let staff use free or personal AI accounts for work that never involves a person, like job adverts. Others allow work accounts only. Which do you want?',
     help: 'Both are defensible. Work accounts only is simpler to follow and to check. Allowing personal accounts for general tasks is realistic if you have no business plans yet, but nothing about any person may ever go into them.',
+    link: '/guides/free-vs-paid-ai-tools',
     options: [
       { id: 'work-only', label: 'Work accounts only' },
       { id: 'general-only', label: 'Personal accounts allowed for tasks with no information about anyone' },
@@ -481,6 +491,7 @@ export const SLOTS: Slot[] = [
     label: 'Tasks',
     question: 'What do you use AI for, or want to? Pick all that apply.',
     help: 'Some tasks never involve a person (job adverts, funding bids). Others always do (visit notes, care plans), and need more safeguards. The policy treats them differently.',
+    link: '/uses',
     options: [
       ...USES.filter((u) => u.readiness !== 'not-yet').map((u) => ({ id: u.id, label: u.title })),
       { id: 'other', label: 'Something else' },
@@ -545,6 +556,7 @@ export const SLOTS: Slot[] = [
       return `Do you have a data processing agreement (DPA) with the supplier of ${names.length === 1 ? '' : 'each of '}${which}?`;
     },
     help: 'A DPA is the contract that says the supplier only uses your data on your instructions. Without one there is no lawful footing for putting personal information into the tool. Business plans usually include one; personal plans never do.',
+    link: '/guides/questions-to-ask-a-supplier',
     options: [
       { id: 'yes', label: 'Yes, for all of them' },
       { id: 'some', label: 'For some' },
@@ -560,6 +572,7 @@ export const SLOTS: Slot[] = [
     label: 'DPIA',
     question: 'Have you done a data protection impact assessment (DPIA) for your use of AI?',
     help: 'For AI touching information about people you support, you almost certainly need one, and before you start rather than after. CQC names it in its principles for AI.',
+    link: '/guides/do-you-need-a-dpia',
     options: [
       { id: 'done', label: 'Yes, done' },
       { id: 'in-progress', label: 'Started' },
@@ -614,6 +627,7 @@ export const SLOTS: Slot[] = [
     question:
       'Everyone checks their own AI drafts. Besides that, who will spot-check AI-produced work to make sure the checking happens?',
     help: 'CQC expects AI outputs to be "continuously monitored and evaluated". That means someone named, on an ongoing basis, not only during a trial.',
+    link: '/guides/what-cqc-says-about-ai',
     suggestions: ['$me', '$owner', 'Care Coordinator', 'Deputy Manager'],
     maxLength: 120,
   },
@@ -625,6 +639,7 @@ export const SLOTS: Slot[] = [
     label: 'How often',
     question: 'How often will they spot-check?',
     help: 'Promise only what you will actually do. A monthly check that happens is worth more than a weekly one that does not.',
+    link: '/guides/spotting-ai-mistakes',
     options: [
       { id: 'weekly', label: 'Weekly, a small sample' },
       { id: 'monthly', label: 'Monthly' },
@@ -665,6 +680,7 @@ export const SLOTS: Slot[] = [
     label: 'Telling people',
     question: 'How will you tell the people you support that AI is involved? Pick all that apply.',
     help: 'The ICO requires you to tell people before a new use of their data starts, not afterwards.',
+    link: '/guides/telling-people-you-support',
     options: [
       { id: 'letter', label: 'A short letter' },
       { id: 'review', label: 'At their next review' },

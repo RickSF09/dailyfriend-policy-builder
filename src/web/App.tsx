@@ -13,7 +13,9 @@ import {
   Users,
   UserX,
 } from 'lucide-react';
+import { HUB_URL } from '../shared/knowledge.generated';
 import { assemblePolicy } from '../shared/policy/assemble';
+import { hubLink } from '../shared/policy/words';
 import { Chat } from './Chat';
 import { checkWorkshop, tailor } from './client';
 import { PolicyView } from './PolicyView';
@@ -140,7 +142,12 @@ export function App() {
 
       <footer className="no-print border-t border-line bg-white">
         <div className="mx-auto max-w-5xl px-4 py-5 text-xs text-muted flex flex-wrap gap-x-4 gap-y-1">
-          <span>A free tool from DailyFriend</span>
+          <span>
+            A free tool from{' '}
+            <a className="underline hover:text-ink" href={HUB_URL} target="_blank" rel="noreferrer">
+              DailyFriend
+            </a>
+          </span>
           <span>Your answers stay in your browser</span>
           <span>Not legal advice</span>
           <a className="underline hover:text-ink" href={SOURCE_URL} target="_blank" rel="noreferrer">
@@ -170,6 +177,8 @@ const PARTS = [
   },
 ];
 
+const dhsc = hubLink('/guides/dhsc-guidance-using-ai-in-adult-social-care');
+
 const SAFETY = [
   { icon: Trash2, title: 'Nothing stored', text: 'Answers stay in your browser' },
   { icon: MapPin, title: 'UK & EU only', text: 'London server, AI in Paris' },
@@ -195,6 +204,19 @@ function Start({
         Answer questions about your care organisation. Get a policy that names your tools, your people and
         your rules, in about fifteen minutes.
       </p>
+      {dhsc && (
+        <p className="mt-2 text-muted">
+          The government’s guidance asks every care provider to have one.{' '}
+          <a
+            className="text-brand underline hover:text-brand-dark"
+            href={dhsc.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            What it says
+          </a>
+        </p>
+      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button

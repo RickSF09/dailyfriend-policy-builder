@@ -3,7 +3,7 @@
 // link to the hub page that explains it. Deterministic, so the same answers
 // always give the same plan.
 
-import { TOOLS } from '../knowledge.generated.js';
+import { ANONYMISER_URL, TOOLS } from '../knowledge.generated.js';
 import {
   allowsAi,
   type Answers,
@@ -16,7 +16,7 @@ import {
   usesMonitoring,
   usesPersonalData,
 } from '../interview.js';
-import type { Action } from './types.js';
+import type { Action, Resource } from './types.js';
 import {
   capitalise,
   chosenTools,
@@ -345,4 +345,37 @@ export function buildActions(a: Answers, today: Date): Action[] {
 
   const order = { now: 0, soon: 1, later: 2 };
   return actions.sort((x, y) => order[x.priority] - order[y.priority]);
+}
+
+/**
+ * Free hub pages and tools that help put the policy into practice, beyond the
+ * ones the action plan already links to. Only pages that exist are listed.
+ */
+export function buildResources(a: Answers): Resource[] {
+  const out: Resource[] = [];
+  const add = (path: string, text: string) => {
+    const link = hubLink(path);
+    if (link) out.push({ ...link, text });
+  };
+  if (allowsAi(a)) {
+    add('/safe-use/check', 'For staff: five questions about a task, and a plain answer on whether AI fits.');
+    add(
+      '/guides/spotting-ai-mistakes',
+      'For everyone who checks AI output: the mistakes it makes, and how to catch them.',
+    );
+    add('/templates/prompts', 'Prompts for common care tasks, with the safety notes built in.');
+    out.push({
+      label: 'Free document anonymiser',
+      url: ANONYMISER_URL,
+      text: 'Takes names, addresses and other details out of a document. Read the result before using it: context can still identify someone.',
+    });
+  } else {
+    add('/uses', 'If you revisit the decision: what AI can and cannot do in care work, rated honestly.');
+  }
+  add(
+    '/tools',
+    'Checked facts on common tools: what each does with your data, and which plans come with a data processing agreement.',
+  );
+  add('/templates/glossary', 'Plain meanings of DPA, DPIA and the other terms in the policy.');
+  return out;
 }

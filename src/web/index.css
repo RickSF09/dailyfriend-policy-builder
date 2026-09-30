@@ -68,6 +68,11 @@ body {
   .print-break {
     break-before: page;
   }
+  /* A printed link needs its address. */
+  #resources a::after {
+    content: ' (' attr(href) ')';
+    font-weight: normal;
+  }
   .policy-page {
     border: none !important;
     box-shadow: none !important;
