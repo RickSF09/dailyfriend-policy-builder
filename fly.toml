@@ -1,7 +1,8 @@
 # DailyFriend AI policy builder on Fly.io, London.
 #
 # Stateless: no volume, no database. Answers exist only in memory while a
-# request is being handled. Secrets:
+# request is being handled. Deployed by CI on every push to main (FLY_API_TOKEN
+# is a GitHub secret: a deploy token for this app). Secrets:
 #   fly secrets set MISTRAL_API_KEY=...
 #   fly secrets set WORKSHOP_CODES=code-for-this-workshop   (optional)
 
