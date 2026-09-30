@@ -46,7 +46,7 @@ function allowedIds(current: Slot, a: Answers): Set<string> {
 }
 
 const RISK = /data processing agreement|personal (plan|account)|trains? (its|on)/i;
-const ACCOUNT_WORDS = /\b(account|plan|personal|free|paid|business|team|enterprise|pro|plus)\b/i;
+const ACCOUNT_WORDS = /\b(accounts?|plans?|personal|free|paid|business|team|enterprise|pro|plus|subscriptions?)\b/i;
 
 /**
  * Rules the model does not always keep, enforced here:
