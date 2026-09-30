@@ -168,7 +168,9 @@ function toolsSection(a: Answers): Section {
       kind: 'table',
       head: ['System', 'What this means'],
       rows: embedded.map((e) => [
-        labels.find((o) => o.id === e)?.label.replace(/, e\.g\..*$/, '') ?? e,
+        e === 'other'
+          ? text(a, 'embeddedOther') || gap('name of the other system')
+          : (labels.find((o) => o.id === e)?.label.replace(/, e\.g\..*$/, '') ?? e),
         'Covered by this policy: a person checks what it produces, and it is included in our DPIA.',
       ]),
     });

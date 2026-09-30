@@ -336,8 +336,19 @@ export const SLOTS: Slot[] = [
       { id: 'monitoring', label: 'Sensors, or acoustic, video or movement monitoring' },
       { id: 'pain', label: 'Pain or health assessment apps' },
       { id: 'recruitment', label: 'Recruitment or HR software' },
+      { id: 'other', label: 'Other software' },
       { id: 'none', label: 'None that I know of' },
     ],
+  },
+  {
+    id: 'embeddedOther',
+    topic: 'current',
+    kind: 'text',
+    label: 'Other systems with AI',
+    question: 'Which other software has AI features built in? Just the names is fine.',
+    placeholder: 'e.g. HubSpot, our finance software',
+    maxLength: 200,
+    when: (a) => list(a, 'embedded').includes('other'),
   },
   {
     id: 'monitoringConsent',
@@ -471,7 +482,9 @@ export const SLOTS: Slot[] = [
         ...list(a, 'tools')
           .filter((t) => t !== 'none' && !['free', 'personal-paid'].includes(String(a[`plan:${t}`])))
           .map((t) => (t === 'other' ? text(a, 'toolsOther') || 'the other tool' : toolName(t))),
-        ...embeddedAi(a).map((e) => EMBEDDED_NAMES[e] ?? e),
+        ...embeddedAi(a).map((e) =>
+          e === 'other' ? text(a, 'embeddedOther') || 'the other system' : (EMBEDDED_NAMES[e] ?? e),
+        ),
       ];
       if (!names.length) return undefined;
       const which =

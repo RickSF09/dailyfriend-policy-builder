@@ -22,6 +22,9 @@ const WITH_ARTICLE: Record<PiiType, string> = {
   'date of birth': 'a date of birth',
 };
 
+/** A reply that ends on a question has asked something again, so the page need not. */
+const asksAgain = (reply: string) => /\?\s*$/.test(reply);
+
 function optionLabel(slot: Slot, id: string): string {
   if (id === UNSURE) return slot.optional ? 'Skip' : 'Not sure';
   return slot.options?.find((o) => o.id === id)?.label ?? id;
@@ -126,7 +129,13 @@ export function Chat({ session, update }: { session: Session; update: Update }) 
     try {
       const res = await sendTurn({ answers: session.answers, slot: slot.id, history, message }, ctrl.signal);
       update((s) => ({
-        ...commit(s, res.values, [{ role: 'assistant', text: res.reply }], res.stay ? slot.id : undefined),
+        // Only skip repeating the question if the reply actually asked it again.
+        ...commit(
+          s,
+          res.values,
+          [{ role: 'assistant', text: res.reply }],
+          res.stay && asksAgain(res.reply) ? slot.id : undefined,
+        ),
         suggested: { ...s.suggested, ...res.suggested },
       }));
     } catch (e) {
