@@ -9,8 +9,10 @@ import {
   type Answers,
   embeddedAi,
   getSlot,
+  isNobody,
   isUnsure,
   list,
+  text,
   usesMonitoring,
   usesPersonalData,
 } from '../interview.js';
@@ -26,6 +28,8 @@ import {
   signoffBy,
   who,
 } from './words.js';
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 /** Role questions that, left unanswered, leave a hole in the policy. */
 const ROLE_SLOTS = [
@@ -105,7 +109,20 @@ export function buildActions(a: Answers, today: Date): Action[] {
     });
   }
 
-  const mixed = tools.filter((t) => t.plan === 'mixed');
+  const undecided = tools.filter((t) => t.agreed !== 'yes' && !isPersonalPlan(t.plan));
+  if (undecided.length) {
+    const names = joinList(undecided.map((t) => t.name));
+    const inUse = a.aiInUse === 'approved' || a.aiInUse === 'informal';
+    add({
+      id: 'decide-tools',
+      priority: inUse ? 'now' : 'soon',
+      title: `Decide whether to approve ${names}`,
+      why: `The policy lists ${undecided.length > 1 ? 'them' : 'it'} as not approved until ${who(a, 'approver', 'whoever approves new tools')} decides.${inUse ? ' If anyone already uses it for work, tell them to stop until then.' : ''} Go through section 12 first: the supplier questions, a data processing agreement and, before any information about people goes in, a DPIA. Then update section 4.`,
+      link: hubLink('/templates/supplier-questions'),
+    });
+  }
+
+  const mixed = tools.filter((t) => t.plan === 'mixed' && t.agreed === 'yes');
   if (mixed.length) {
     add({
       id: 'mixed-accounts',
@@ -141,11 +158,26 @@ export function buildActions(a: Answers, today: Date): Action[] {
   }
 
   if (personal && tools.length && a.dpa !== 'yes') {
+    // Business plans of some tools come with an agreement in the supplier's
+    // business terms: the job there is finding and filing it, not asking.
+    const included = tools.filter((t) => {
+      const fact = TOOLS.find((x) => x.id === t.id);
+      return (
+        (t.plan === 'business' || t.plan === 'mixed') && (fact?.dpa === 'yes' || fact?.dpa === 'depends')
+      );
+    });
+    const names = joinList(included.map((t) => t.name));
     add({
       id: 'dpa',
       priority: 'now',
-      title: 'Get a data processing agreement from each supplier',
-      why: 'Without one there is no contract governing what the supplier does with personal information. Ask for it in writing before anything about a person goes into the tool, and keep it with your DPIA.',
+      title: included.length
+        ? 'Confirm and file a data processing agreement for each tool'
+        : 'Get a data processing agreement from each supplier',
+      why: `Without one there is no contract governing what the supplier does with personal information.${
+        included.length
+          ? ` For business plans of ${names}, the supplier’s published terms say one is included: find it, check it covers the account you use, and keep a copy.`
+          : ''
+      } For anything else, ask the supplier for it in writing before anything about a person goes into the tool. Keep them with your DPIA.`,
       link: hubLink('/templates/supplier-questions'),
     });
   }
@@ -268,13 +300,15 @@ export function buildActions(a: Answers, today: Date): Action[] {
     });
   }
 
-  const gaps = ROLE_SLOTS.filter((id) => getSlot(id) && (a[id] === undefined || isUnsure(a[id])));
+  const gaps = ROLE_SLOTS.filter(
+    (id) => getSlot(id) && (a[id] === undefined || isUnsure(a[id]) || isNobody(text(a, id))),
+  );
   if (gaps.length) {
     add({
       id: 'gaps',
       priority: 'now',
       title: 'Fill in the gaps marked [TO DECIDE]',
-      why: `Still to decide: ${joinList(gaps.map((id) => getSlot(id)!.label.toLowerCase()))}. A policy with blanks is not yet a policy anyone can follow.`,
+      why: `Still to decide: ${joinList(gaps.map((id) => lowerFirst(getSlot(id)!.label)))}. A policy with blanks is not yet a policy anyone can follow.`,
       link: hubLink('/guides/writing-an-ai-use-policy'),
     });
   }

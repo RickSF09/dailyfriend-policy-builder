@@ -44,7 +44,7 @@ Reply rules:
 Recording values:
 - choice question: one option id, for example "yes". For a data processing agreement, "some" means they said at least one of the named tools or systems has none.
 - multi question: an array of option ids. If they mention something that is not an option, include "other" and put their words in the question id followed by "Other" (for example "toolsOther": "Birdie").
-- text question: a short answer in their words, under 120 characters, tidied into a label. "our registered manager, Sue" becomes "Registered Manager (Sue)".
+- text question: a short answer in their words, under 120 characters, tidied into a label. "our registered manager, Sue" becomes "Registered Manager (Sue)". For a question about who does something, record the role, not a sentence about it: "As CEO I review it and take it to the board to decide" becomes "CEO reviews; the board decides". If they say nobody does it yet ("no one right now", "we haven't got anyone"), record "__unsure".
 - "__unsure" if they clearly say they do not know, have not decided, or want to skip, or if they answer an optional question with "no" or "nothing". A hedged answer to a yes or no question ("possibly", "maybe", "probably", "I think so") is also "__unsure": the policy treats it as something to find out.
 - When you record tools, you may also record the account each is used on, as "plan:<tool id>" with one of: "free" (free personal account), "personal-paid" (a paid personal plan such as ChatGPT Plus), "business" (a work account on a business plan, such as ChatGPT Business, Google Workspace or Microsoft 365), "mixed" (some of each). Only when they said it.
 

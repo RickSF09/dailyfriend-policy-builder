@@ -44,6 +44,30 @@ export interface Snippets {
   purpose?: string;
   /** Use id → one sentence showing that use in this organisation. */
   examples?: Record<string, string>;
+  /**
+   * Typed answers put into policy wording. Each keeps the answer it was made
+   * from (`from`), and is only used while that answer is unchanged.
+   */
+  wording?: Wording;
+}
+
+export type RoleWording =
+  | {
+      from: string;
+      /** Fits mid-sentence: "Tell ___ straight away", "until ___ has approved it". */
+      phrase: string;
+      /** Short, for the roles table. */
+      cell: string;
+    }
+  /** The answer says nobody holds the role yet: the policy shows a gap. */
+  | { from: string; none: true };
+
+export interface Wording {
+  roles?: Record<string, RoleWording>;
+  /** Their own red lines, each finishing "AI must never be used …". */
+  redLines?: { from: string; items: string[] };
+  /** Their other tasks, as a phrase finishing "Also agreed, subject to the same rules: …". */
+  tasksOther?: { from: string; text: string };
 }
 
 export const GAP = /\[TO DECIDE: [^\]]*\]/g;

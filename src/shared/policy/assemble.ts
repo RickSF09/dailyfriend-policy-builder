@@ -36,10 +36,15 @@ import {
   regulators,
   reportHow,
   reviewDate,
+  RED_LINES,
   signoffBy,
+  TASKS_OTHER,
+  type ToolRow,
+  usableTools,
   who,
   Who,
   whoCell,
+  withWording,
   workforce,
 } from './words.js';
 
@@ -82,21 +87,25 @@ function toolsSection(a: Answers): Section {
   const dpiaOk = a.dpia === 'done';
   const blocks: Block[] = [];
 
-  function personalInfo(plan: string): string {
-    if (isPersonalPlan(plan) || plan === 'unsure') return 'Never';
+  function personalInfo(r: ToolRow): string {
+    if (isPersonalPlan(r.plan) || r.plan === 'unsure') return 'Never';
+    if (r.agreed === 'no') return 'No';
     if (!personal) return 'No';
+    if (a.dpa === 'some') return 'Only once its data processing agreement is confirmed';
     if (!dpaOk) return 'Not until a data processing agreement is confirmed';
     if (!dpiaOk) return 'Not until the DPIA is complete';
     return 'Yes, for the tasks in section 5';
   }
 
-  function status(plan: string): string {
-    if (plan === 'unsure') return 'Not approved until the plan is confirmed';
-    if (isPersonalPlan(plan)) {
+  function status(r: ToolRow): string {
+    if (isPersonalPlan(r.plan)) {
       if (rule === 'general-only') return 'Approved only for tasks with no information about anyone';
       if (rule === 'work-only') return 'Not approved for work';
       return gap('whether personal accounts are allowed');
     }
+    if (r.agreed === 'no') return 'Under review: not approved yet';
+    if (r.agreed === 'unknown') return gap(`whether ${r.name} has been agreed`);
+    if (r.plan === 'unsure') return 'Not approved until the plan is confirmed';
     return 'Approved';
   }
 
@@ -113,9 +122,23 @@ function toolsSection(a: Answers): Section {
     blocks.push({
       kind: 'table',
       head: ['Tool', 'Account', 'Status', 'Information about people?'],
-      rows: rows.map((r) => [r.name, PLAN_TEXT[r.plan] ?? r.plan, status(r.plan), personalInfo(r.plan)]),
+      rows: rows.map((r) => [r.name, PLAN_TEXT[r.plan] ?? r.plan, status(r), personalInfo(r)]),
     });
-    for (const r of rows.filter((x) => x.plan === 'mixed')) {
+    if (rows.some((r) => r.agreed === 'yes' && !isPersonalPlan(r.plan))) {
+      blocks.push({
+        kind: 'p',
+        text: 'Signing off this policy confirms the approvals in this table.',
+      });
+    }
+    const review = rows.filter((r) => r.agreed === 'no' && !isPersonalPlan(r.plan));
+    if (review.length) {
+      const names = joinList(review.map((r) => r.name));
+      blocks.push({
+        kind: 'p',
+        text: `**${names} ${review.length > 1 ? 'are' : 'is'} under review.** Until ${who(a, 'approver', 'who approves new tools')} decides, through section 12, nobody uses ${review.length > 1 ? 'them' : 'it'} for work, including anyone who already has an account.`,
+      });
+    }
+    for (const r of rows.filter((x) => x.plan === 'mixed' && x.agreed !== 'no')) {
       blocks.push({
         kind: 'p',
         text:
@@ -193,6 +216,12 @@ function toolsSection(a: Answers): Section {
   return { id: 'tools', title: 'Approved tools and accounts', blocks };
 }
 
+/** Can a task involving information about people start now, in some tool? */
+function readyForPeople(a: Answers): boolean {
+  if (embeddedAi(a).length) return true;
+  return usableTools(a).length > 0 && (a.dpa === 'yes' || a.dpa === 'some') && a.dpia === 'done';
+}
+
 function usesSection(a: Answers, snippets: Snippets): Section {
   const chosen = list(a, 'tasks');
   const example = (id: string) => snippets.examples?.[id] ?? DEFAULT_EXAMPLES[id] ?? '';
@@ -204,7 +233,7 @@ function usesSection(a: Answers, snippets: Snippets): Section {
   const withPeople = USES.filter((u) => u.readiness === 'care' && chosen.includes(u.id)).map((u) =>
     line(u.id),
   );
-  const other = text(a, 'tasksOther');
+  const other = text(a, TASKS_OTHER) || text(a, 'tasksOther');
   const blocks: Block[] = [];
 
   if (!allowsAi(a)) {
@@ -229,7 +258,9 @@ function usesSection(a: Answers, snippets: Snippets): Section {
       blocks.push({ kind: 'heading', text: 'Tasks that involve information about people' });
       blocks.push({
         kind: 'p',
-        text: 'Only in a tool approved for information about people in section 4, and only with the safeguards in section 7.',
+        text: readyForPeople(a)
+          ? 'Only in a tool approved for information about people in section 4, and only with the safeguards in section 7.'
+          : '**None of these can start yet.** No tool in section 4 is approved for information about people. They start only once a tool is, with the safeguards in section 7 in place.',
       });
       blocks.push({ kind: 'bullets', items: withPeople });
     }
@@ -258,12 +289,15 @@ function neverSection(a: Answers): Section {
     decide.push('whether someone has capacity to make a decision, or what is in their best interests');
   }
   const never = [
-    'as the sole author of a care plan, a safeguarding record, an incident report, or anything we send to our regulator, such as a registration application. A person writes or fully rewrites these, and checks every fact against our own records',
+    'as the author of a care plan, a safeguarding record, an incident report, or anything we send to our regulator, such as a registration application. AI may draft parts of these, but a person writes the final version, checks every fact against our own records and is responsible for it',
     'to record or transcribe anyone without telling them',
     'in a tool or account that section 4 does not approve for that task',
   ];
-  const own = text(a, 'redLines');
-  if (own) never.push(own);
+  // Their own red lines, as clauses the model has fitted to this list. Without
+  // that, their words are quoted as they typed them rather than forced into it.
+  const tidied = list(a, RED_LINES);
+  never.push(...tidied);
+  const own = tidied.length ? '' : text(a, 'redLines');
   return {
     id: 'never',
     title: 'What AI must never be used for',
@@ -276,6 +310,7 @@ function neverSection(a: Answers): Section {
       },
       { kind: 'p', text: 'AI must also never be used:' },
       { kind: 'bullets', items: never },
+      ...(own ? [{ kind: 'p' as const, text: `We have also agreed: “${own.replace(/[.\s]+$/, '')}.”` }] : []),
       { kind: 'p', text: '**AI drafts and organises. People decide.**' },
     ],
   };
@@ -297,8 +332,12 @@ function dataSection(a: Answers): Section {
       'anything that identifies someone in combination, such as a rare condition in a small village, or “the gentleman on the Tuesday round with the new hoist”',
       'care records, incident records or safeguarding information',
       'personal or HR information about staff or volunteers',
-      'passwords, bank details or other confidential business information',
+      'confidential business information',
     ],
+  });
+  blocks.push({
+    kind: 'p',
+    text: '**Passwords, security codes and bank details never go into any AI tool**, approved or not.',
   });
   if (!personal) {
     blocks.push({
@@ -308,7 +347,7 @@ function dataSection(a: Answers): Section {
   } else {
     const dpa: Record<string, string> = {
       yes: 'in place',
-      some: '**in place for some suppliers only**',
+      some: '**in place for some suppliers only**; a tool may only be used once its own agreement is confirmed',
       no: '**not yet in place**',
     };
     const dpia: Record<string, string> = {
@@ -734,9 +773,7 @@ function reviewSection(a: Answers, today: Date): Section {
 function staffSummary(a: Answers): { title: string; blocks: Block[] } {
   const org = orgName(a);
   const personal = usesPersonalData(a);
-  const rows = allowsAi(a)
-    ? chosenTools(a).filter((r) => !isPersonalPlan(r.plan) && r.plan !== 'unsure')
-    : [];
+  const rows = allowsAi(a) ? usableTools(a) : [];
   const toolLine = !allowsAi(a)
     ? '**Do not use AI tools for work**, including free and personal accounts. Ask first if you are unsure whether something counts.'
     : rows.length
@@ -785,7 +822,7 @@ function countGaps(doc: Omit<PolicyDoc, 'gaps'>): number {
 }
 
 export function assemblePolicy(answers: Answers, snippets: Snippets = {}, today = new Date()): PolicyDoc {
-  const a = prune(answers);
+  const a = withWording(prune(answers), snippets.wording);
   const sections: Section[] = [
     purposeSection(a, snippets),
     principlesSection(a),

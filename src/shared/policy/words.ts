@@ -2,7 +2,8 @@
 // [TO DECIDE: ...] gap, never a guess.
 
 import { HUB_URL, PAGES } from '../knowledge.generated.js';
-import { type Answers, isUnsure, list, text, toolName } from '../interview.js';
+import { type Answers, isNobody, isUnsure, list, text, toolName, UNSURE } from '../interview.js';
+import type { Wording } from './types.js';
 
 export const gap = (what: string) => `[TO DECIDE: ${what}]`;
 
@@ -33,25 +34,91 @@ export function reviewDate(a: Answers, today: Date): string {
 }
 
 const ROLE_WORD =
-  /\b(manager|coordinator|co-ordinator|officer|director|directors|lead|leader|trustee|trustees|board|owner|chief|executive|deputy|supervisor|administrator|head|team|dpo|ceo|coo|nurse|chair)\b/i;
+  /\b(manager|coordinator|co-ordinator|officer|director|directors|lead|leader|trustee|trustees|board|owner|chief|executive|deputy|supervisor|administrator|head|team|dpo|ceo|coo|cto|cfo|cio|nurse|chair)\b/i;
+
+/** "Their line manager", "my manager": the policy speaks to staff, so it is "your line manager". */
+const OWN_MANAGER =
+  /^(their|his|her|your|my|own|each person'?s|the person'?s)\s+(own\s+)?((line\s+)?manager|supervisor|team leader)\b/i;
 
 /** "Registered Manager" reads as "the Registered Manager"; a bare name reads as itself. */
 export function rolePhrase(t: string): string {
-  if (/^(the|our|a|an|my|their|each|every|any)\b/i.test(t)) return t;
+  const own = OWN_MANAGER.exec(t);
+  if (own) return `your ${own[3]!.toLowerCase()}${t.slice(own[0].length)}`;
+  if (/^(the|our|a|an|my|their|each|every|any)\b/i.test(t)) {
+    return t.charAt(0).toLowerCase() + t.slice(1);
+  }
   return ROLE_WORD.test(t) ? `the ${t}` : t;
 }
 
+// Typed answers the model has put into policy wording (see server/tailor.ts)
+// travel with the answers under these keys, so every clause picks them up.
+// assemblePolicy() adds them after pruning, and only while the answer they
+// were made from is unchanged.
+const PHRASE = (id: string) => `~phrase:${id}`;
+const CELL = (id: string) => `~cell:${id}`;
+export const RED_LINES = '~redLines';
+export const TASKS_OTHER = '~tasksOther';
+
+export function withWording(a: Answers, w: Wording | undefined): Answers {
+  if (!w) return a;
+  const out = { ...a };
+  for (const [id, r] of Object.entries(w.roles ?? {})) {
+    if (text(a, id) !== r.from) continue;
+    if ('none' in r) {
+      out[id] = UNSURE;
+      continue;
+    }
+    out[PHRASE(id)] = r.phrase;
+    out[CELL(id)] = r.cell;
+  }
+  if (w.redLines && text(a, 'redLines') === w.redLines.from && w.redLines.items.length) {
+    out[RED_LINES] = w.redLines.items;
+  }
+  if (w.tasksOther && text(a, 'tasksOther') === w.tasksOther.from) out[TASKS_OTHER] = w.tasksOther.text;
+  return out;
+}
+
+/** A role answer, unless it says nobody holds the role yet. */
+const role = (a: Answers, id: string) => {
+  const t = text(a, id);
+  return t && !isNobody(t) ? t : '';
+};
+
+/**
+ * An answer that is more than a role ("As CEO I review it and the board
+ * decides", "CEO reviews; the board decides") cannot go into a sentence as it
+ * is. Without the model's wording, the sentence names the role from section 3
+ * instead, and the roles table shows their words.
+ */
+const isPlainRole = (t: string) =>
+  !/[;:]/.test(t) && !/\b(i|we|me|us)\b/i.test(t) && t.split(/\s+/).length <= 6;
+
+const ROLE_NAME: Record<string, string> = {
+  owner: 'the policy owner',
+  approver: 'the person who approves new tools (section 3)',
+  dpLead: 'the data protection lead',
+  checker: 'the person who spot-checks AI output (section 3)',
+  reportTo: 'the person named in section 3',
+};
+
 /** A role from a text answer, phrased for the middle of a sentence, or a gap describing it. */
 export const who = (a: Answers, id: string, describe: string) => {
-  const t = text(a, id);
-  return t ? rolePhrase(t) : gap(describe);
+  const t = role(a, id);
+  if (!t) return gap(describe);
+  const tidied = text(a, PHRASE(id));
+  if (tidied) return tidied;
+  return isPlainRole(t) || !ROLE_NAME[id] ? rolePhrase(t) : ROLE_NAME[id];
 };
 
 /** The same, at the start of a sentence. */
 export const Who = (a: Answers, id: string, describe: string) => capitalise(who(a, id, describe));
 
-/** A role as typed, for table cells. */
-export const whoCell = (a: Answers, id: string, describe: string) => text(a, id) || gap(describe);
+/** A role for table cells: as typed, tidied where the model has done so. */
+export const whoCell = (a: Answers, id: string, describe: string) => {
+  const t = role(a, id);
+  if (!t) return gap(describe);
+  return text(a, CELL(id)) || t;
+};
 
 export const capitalise = (s: string) => (s.startsWith('[') ? s : s.charAt(0).toUpperCase() + s.slice(1));
 
@@ -137,18 +204,26 @@ export interface ToolRow {
   id: string;
   name: string;
   plan: string;
+  /** Has the organisation agreed to it? "unknown" when that question was not answered. */
+  agreed: 'yes' | 'no' | 'unknown';
 }
 
 /** Every tool named in the answers, with its plan answer. "other" uses their own wording. */
 export function chosenTools(a: Answers): ToolRow[] {
+  const agreed = list(a, 'agreed');
   return list(a, 'tools')
     .filter((t) => t !== 'none')
     .map((id) => ({
       id,
       name: id === 'other' ? text(a, 'toolsOther') || gap('name of the other tool') : toolName(id),
       plan: isUnsure(a[`plan:${id}`]) ? 'unsure' : String(a[`plan:${id}`] ?? 'unsure'),
+      agreed: agreed.includes(id) ? 'yes' : agreed.length ? 'no' : 'unknown',
     }));
 }
+
+/** Tools staff may use now: agreed, and on an account that could be approved. */
+export const usableTools = (a: Answers) =>
+  chosenTools(a).filter((r) => r.agreed === 'yes' && !isPersonalPlan(r.plan) && r.plan !== 'unsure');
 
 export const isPersonalPlan = (plan: string) => plan === 'free' || plan === 'personal-paid';
 

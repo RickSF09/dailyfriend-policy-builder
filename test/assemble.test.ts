@@ -93,7 +93,100 @@ describe('assemblePolicy', () => {
 describe('rolePhrase', () => {
   it('adds "the" to a role but not to a name', () => {
     expect(rolePhrase('Registered Manager')).toBe('the Registered Manager');
-    expect(rolePhrase('Our deputy manager')).toBe('Our deputy manager');
+    expect(rolePhrase('Our deputy manager')).toBe('our deputy manager');
     expect(rolePhrase('Sue Smith')).toBe('Sue Smith');
+  });
+
+  it('speaks to staff about their own line manager', () => {
+    expect(rolePhrase('Their line manager')).toBe('your line manager');
+    expect(rolePhrase('my manager')).toBe('your manager');
+  });
+});
+
+describe('tool approval', () => {
+  const base = {
+    orgName: 'Test',
+    stance: 'approved',
+    aiInUse: 'informal',
+    approver: 'CEO',
+    tools: ['microsoft-copilot', 'claude'],
+    'plan:microsoft-copilot': 'business',
+    'plan:claude': 'mixed',
+  };
+
+  it('approves only the tools they have agreed', () => {
+    const doc = assemblePolicy({ ...base, agreed: ['microsoft-copilot'] }, {}, TODAY);
+    const table = doc.sections[3]!.blocks.find((b) => b.kind === 'table');
+    expect(table?.kind === 'table' && table.rows.map((r) => [r[0], r[2]])).toEqual([
+      ['Microsoft Copilot', 'Approved'],
+      ['Claude', 'Under review: not approved yet'],
+    ]);
+    const text = allText(doc);
+    expect(text).toContain('Claude is under review.');
+    expect(text).not.toContain('They must move to the work account');
+    expect(text).toContain('Only use these tools, signed in to the work account:** Microsoft Copilot.');
+    expect(doc.actions.map((a) => a.id)).toContain('decide-tools');
+    expect(doc.actions.map((a) => a.id)).not.toContain('mixed-accounts');
+  });
+
+  it('leaves a gap when nobody said whether a tool is agreed', () => {
+    const text = allText(assemblePolicy(base, {}, TODAY));
+    expect(text).toContain('[TO DECIDE: whether Claude has been agreed]');
+    expect(text).toContain('No AI tools are approved for work yet.');
+  });
+});
+
+describe('typed answers in sentences', () => {
+  const base = {
+    orgName: 'Test',
+    approver: 'As a CEO I review it and bring it to the board to decide',
+    checker: 'No one right now',
+    reportTo: 'Their line manager',
+    redLines: 'Never the final decision, escpesially on care plans',
+  };
+
+  it('treats "no one" as a gap, not a name', () => {
+    const text = allText(assemblePolicy(base, {}, TODAY));
+    expect(text).not.toContain('No one right now');
+    expect(text).toContain('[TO DECIDE: who spot-checks AI output] checks a sample');
+  });
+
+  it('tells staff to go to their line manager', () => {
+    const text = allText(assemblePolicy(base, {}, TODAY));
+    expect(text).toContain('tell your line manager');
+    expect(text).not.toContain('Their line manager in');
+  });
+
+  it('keeps a sentence-like answer out of running text when there is no tidied wording', () => {
+    const text = allText(assemblePolicy(base, {}, TODAY));
+    expect(text).toContain('until the person who approves new tools (section 3) has approved it');
+    expect(text).toContain('\nAs a CEO I review it and bring it to the board to decide\n');
+  });
+
+  it('quotes their own red line rather than forcing it into the list', () => {
+    const text = allText(assemblePolicy(base, {}, TODAY));
+    expect(text).toContain('We have also agreed: “Never the final decision, escpesially on care plans.”');
+  });
+
+  it('uses the tidied wording while the answer is unchanged', () => {
+    const wording = {
+      roles: {
+        approver: {
+          from: base.approver,
+          phrase: 'the board',
+          cell: 'CEO reviews; the board decides',
+        },
+      },
+      redLines: { from: base.redLines, items: ['to make the final decision, especially on care plans'] },
+    };
+    const text = allText(assemblePolicy(base, { wording }, TODAY));
+    expect(text).toContain('until the board has approved it');
+    expect(text).toContain('CEO reviews; the board decides');
+    expect(text).toContain('to make the final decision, especially on care plans');
+    expect(text).not.toContain('As a CEO');
+    expect(text).not.toContain('escpesially');
+
+    const edited = allText(assemblePolicy({ ...base, approver: 'Registered Manager' }, { wording }, TODAY));
+    expect(edited).toContain('until the Registered Manager has approved it');
   });
 });

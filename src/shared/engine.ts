@@ -5,6 +5,8 @@ import {
   type Answers,
   type AnswerValue,
   getSlot,
+  isNobody,
+  ROLE_TEXT_SLOTS,
   type Slot,
   TOPICS,
   type TopicId,
@@ -71,6 +73,8 @@ export function coerce(slot: Slot, raw: unknown): AnswerValue | undefined {
         .slice(0, slot.maxLength ?? LIMITS.maxAnswerText);
       // "No, nothing else" to an optional question is a skip, not an answer to print.
       if (slot.optional && isNoAnswer(t)) return UNSURE;
+      // "No one right now" is not a role: the policy shows a gap instead.
+      if ((ROLE_TEXT_SLOTS as readonly string[]).includes(slot.id) && isNobody(t)) return UNSURE;
       return t ? t : undefined;
     }
   }

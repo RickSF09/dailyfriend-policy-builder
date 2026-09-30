@@ -31,7 +31,13 @@ const ALWAYS = [
 ];
 
 function words(s: string): string[] {
-  return s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  // "CEO's" is the word "CEO".
+  return (
+    s
+      .toLowerCase()
+      .replace(/['’]s\b/g, '')
+      .match(/[\p{L}\p{N}]+/gu) ?? []
+  );
 }
 
 export function vocabulary(sources: string[]): Set<string> {

@@ -119,6 +119,13 @@ export const usesMonitoring = (a: Answers) => embeddedAi(a).some((e) => e === 'm
 const aiInUse = (a: Answers) => a.aiInUse === 'approved' || a.aiInUse === 'informal';
 const hasTools = (a: Answers) => allowsAi(a) && list(a, 'tools').some((t) => t !== 'none');
 
+/** Text questions answered with a role. The policy puts these answers into sentences. */
+export const ROLE_TEXT_SLOTS = ['owner', 'approver', 'dpLead', 'checker', 'reportTo'] as const;
+
+/** "No one", "nobody yet", "no one right now": the role is not filled, so it is a gap. */
+export const isNobody = (t: string) =>
+  /^(no[\s-]?one|nobody|none|not anyone|n\/a)\b/i.test(t.trim()) && t.trim().split(/\s+/).length <= 5;
+
 // ---------------------------------------------------------------------------
 // Plans. "Which kind of account" matters more than which tool.
 // ---------------------------------------------------------------------------
@@ -161,6 +168,52 @@ function planSlot(toolId: string): Slot {
           : 'Work account on a business plan',
       },
       { id: 'mixed', label: 'A mix: some people on each' },
+    ],
+  };
+}
+
+/**
+ * Which of the chosen tools has the organisation actually agreed to? "Used now
+ * or planned" is not the same as approved, and the policy must not approve a
+ * tool nobody has decided on. Options are all tools; visibleSlots() narrows
+ * them to the ones chosen.
+ */
+const AGREED: Slot = {
+  id: 'agreed',
+  askDirectly: true,
+  topic: 'current',
+  kind: 'multi',
+  label: 'Tools already agreed',
+  question:
+    'Which of these has your organisation already agreed staff may use for work? Leave out any you are still considering.',
+  help: 'Being used, or planned, is not the same as agreed. A tool you are still considering goes in the policy as under review, and nobody uses it for work until whoever approves new tools has decided.',
+  options: [
+    ...TOOLS.map((t) => ({ id: t.id, label: t.name })),
+    { id: 'other', label: 'The other tools' },
+    { id: 'none', label: 'None agreed yet' },
+  ],
+};
+
+/**
+ * Tools on a work account (or an account not yet known). A personal plan's
+ * status follows the personal accounts rule instead, so it is not asked about.
+ */
+function agreeable(a: Answers): string[] {
+  return list(a, 'tools').filter(
+    (t) => t !== 'none' && !['free', 'personal-paid'].includes(String(a[`plan:${t}`])),
+  );
+}
+
+function agreedSlot(a: Answers): Slot {
+  const chosen = agreeable(a);
+  return {
+    ...AGREED,
+    options: [
+      ...chosen.map((id) => ({
+        id,
+        label: id === 'other' ? text(a, 'toolsOther') || 'The other tools' : toolName(id),
+      })),
+      { id: 'none', label: 'None agreed yet' },
     ],
   };
 }
@@ -723,6 +776,7 @@ const BY_ID = new Map(SLOTS.map((s) => [s.id, s]));
 export function getSlot(id: string): Slot | undefined {
   const fixed = BY_ID.get(id);
   if (fixed) return fixed;
+  if (id === 'agreed') return AGREED;
   const m = /^plan:(.+)$/.exec(id);
   if (m?.[1] && (m[1] === 'other' || TOOLS.some((t) => t.id === m[1]))) return planSlot(m[1]);
   return undefined;
@@ -741,6 +795,7 @@ export function visibleSlots(a: Answers): Slot[] {
       for (const t of list(a, 'tools')) {
         if (t !== 'none') out.push(planSlot(t));
       }
+      if (hasTools(a) && agreeable(a).length) out.push(agreedSlot(a));
     }
   }
   return out;

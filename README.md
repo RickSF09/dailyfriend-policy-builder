@@ -21,7 +21,9 @@ Browser (holds all answers, localStorage)            Server (Fly.io, London, sta
   type an answer ── POST /api/turn ──────────────→  Mistral (EU API, Paris): read the answer
                  ←─ values + short reply ─────────   keep only values that fit the question
   review answers (form, no server call)
-  build ────────── POST /api/tailor ─────────────→  Mistral: purpose paragraph + one example per task
+  build ────────── POST /api/tailor ─────────────→  Mistral, two calls side by side:
+                                                       purpose paragraph + one example per task;
+                                                       typed answers fitted into the policy's sentences
                  ←─ snippets that pass grounding ──   reject any sentence naming things not in the answers
   assemble policy + Word file in the browser
 ```
@@ -40,10 +42,18 @@ Browser (holds all answers, localStorage)            Server (Fly.io, London, sta
 
 **The model never writes the rules.** The engine decides what to ask. The policy is fixed wording
 based on the hub's checked guides and templates; answers only decide which clauses appear and fill in
-names, roles and tools. The model does three small jobs: read typed answers, answer a question about
-a term ("what is a DPIA?") from a fixed list of facts, and write a purpose paragraph plus one
-example sentence per task. Any tailored sentence that mentions a name, place, product or number not
-found in the answers is dropped, and the default wording is used instead.
+names, roles and tools. The model does four small jobs: read typed answers, answer a question about
+a term ("what is a DPIA?") from a fixed list of facts, write a purpose paragraph plus one example
+sentence per task, and fit typed answers into the sentences they appear in ("As CEO I review it and
+the board decides" becomes "the board" in "until ___ has approved it", and "CEO reviews; the board
+decides" in the roles table; their own red lines become clauses of the "never" list). Any tailored
+sentence that mentions a name, place, product or number not found in the answers is dropped, and the
+default wording is used instead: a role answer that is more than a role is then named by its role
+from section 3, and their own red lines are quoted as typed.
+
+**Used or planned is not approved.** The builder asks which tools the organisation has already
+agreed. Any other tool on a work account is listed as under review, is left off the staff summary,
+and gets an action to decide on it.
 
 **Unanswered means a visible gap, never a guess.** "Not sure" becomes `[TO DECIDE: …]` in the policy
 and an item in the action plan.

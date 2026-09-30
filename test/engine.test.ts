@@ -66,6 +66,28 @@ describe('coerce', () => {
   });
 });
 
+describe('role answers', () => {
+  it('treats "no one right now" as not decided', () => {
+    expect(coerce(getSlot('checker')!, 'No one right now')).toBe(UNSURE);
+    expect(coerce(getSlot('checker')!, 'Nobody yet')).toBe(UNSURE);
+    expect(coerce(getSlot('checker')!, 'Deputy Manager')).toBe('Deputy Manager');
+  });
+});
+
+describe('tools already agreed', () => {
+  it('is asked after the accounts, about work-account tools only', () => {
+    const a = { stance: 'approved', tools: ['chatgpt', 'claude'], 'plan:chatgpt': 'free' };
+    const slots = visibleSlots(a);
+    const order = slots.map((s) => s.id);
+    expect(order.indexOf('agreed')).toBe(order.indexOf('plan:claude') + 1);
+    expect(slots.find((s) => s.id === 'agreed')?.options?.map((o) => o.id)).toEqual(['claude', 'none']);
+  });
+
+  it('is not asked when every tool is on a personal plan', () => {
+    expect(ids({ stance: 'approved', tools: ['chatgpt'], 'plan:chatgpt': 'free' })).not.toContain('agreed');
+  });
+});
+
 describe('applyValues and prune', () => {
   it('records a plan together with its tool in one patch', () => {
     const a = applyValues({ stance: 'approved' }, { 'plan:claude': 'business', tools: ['claude'] });
