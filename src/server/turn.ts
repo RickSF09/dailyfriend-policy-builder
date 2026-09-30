@@ -70,11 +70,8 @@ export function tidyReply(
     if (answered && s.trim().endsWith('?')) return false;
     if (!RISK.test(s)) return true;
     if (!mentionsAccount) return false;
-    const tools = namesTool(s);
-    const said = earlier.some(
-      (e) => RISK.test(e) && (!tools.length || tools.some((t) => e.includes(t.name))),
-    );
-    return !said;
+    // Personal accounts and agreements are one point, however it is worded.
+    return !earlier.some((e) => RISK.test(e));
   });
   return kept.join('').trim();
 }

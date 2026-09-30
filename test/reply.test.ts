@@ -32,6 +32,24 @@ describe('tidyReply', () => {
     expect(r).toBe('Thank you.');
   });
 
+  it('does not repeat the point in other words', () => {
+    const general = [
+      {
+        role: 'assistant',
+        content:
+          'Thank you. Using personal accounts for work carries a risk as there is no data processing agreement.',
+      },
+    ];
+    expect(
+      tidyReply(
+        'Noted. Using Claude on personal plans carries a risk.',
+        'claude on their own accounts still',
+        general,
+        true,
+      ),
+    ).toBe('Noted.');
+  });
+
   it('does not repeat a risk an earlier reply already gave', () => {
     const r = tidyReply(
       'Noted. Using Claude on personal plans carries a risk as there is no data processing agreement.',
