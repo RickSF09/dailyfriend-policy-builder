@@ -65,7 +65,7 @@ describe('runTurn', () => {
     const out = await runTurn({ ...base, slot: 'tools', message: 'What is a DPA?' });
     expect(out.values).toEqual({});
     expect(out.stay).toBe(true);
-    expect(out.reply).toMatch(/another way/);
+    expect(out.reply).toMatch(/pick from the list/);
   });
 
   it('refuses a question that is not open', async () => {

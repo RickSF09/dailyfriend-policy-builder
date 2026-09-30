@@ -46,7 +46,8 @@ function allowedIds(current: Slot, a: Answers): Set<string> {
 }
 
 const RISK = /data processing agreement|personal (plan|account)|trains? (its|on)/i;
-const ACCOUNT_WORDS = /\b(accounts?|plans?|personal|free|paid|business|team|enterprise|pro|plus|subscriptions?)\b/i;
+const ACCOUNT_WORDS =
+  /\b(accounts?|plans?|personal|free|paid|business|team|enterprise|pro|plus|subscriptions?)\b/i;
 
 /**
  * Rules the model does not always keep, enforced here:
@@ -154,6 +155,11 @@ export async function runTurn(req: TurnRequest): Promise<TurnResponse> {
     req.history,
     answered,
   );
+  // The model thought it had an answer, but nothing it sent fits the question:
+  // saying "Noted." and then asking again would be confusing.
+  if (!answered && raw.stay !== true && current.options) {
+    reply = 'Sorry, I could not match that to the options. Could you pick from the list below?';
+  }
   if (!reply)
     reply = answered ? 'Thank you.' : 'Sorry, I did not quite follow. Could you put that another way?';
   return { reply, values, suggested, stay: !answered };

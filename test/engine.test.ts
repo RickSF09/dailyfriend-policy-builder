@@ -56,6 +56,13 @@ describe('coerce', () => {
     expect(coerce(slot, UNSURE)).toBe(UNSURE);
   });
 
+  it('recovers a list the model returned as one string', () => {
+    expect(coerce(getSlot('embedded')!, ["care-records', 'rostering"])).toEqual([
+      'care-records',
+      'rostering',
+    ]);
+  });
+
   it('drops "none" when a real tool is also picked', () => {
     expect(coerce(getSlot('tools')!, ['none', 'chatgpt', 'made-up'])).toEqual(['chatgpt']);
   });

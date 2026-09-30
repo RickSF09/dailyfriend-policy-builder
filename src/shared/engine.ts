@@ -59,7 +59,10 @@ export function coerce(slot: Slot, raw: unknown): AnswerValue | undefined {
     case 'choice':
       return typeof raw === 'string' && ids.has(raw) ? raw : undefined;
     case 'multi': {
-      const arr = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
+      // The model now and then returns ["a', 'b"]: one string holding the list.
+      const arr = (Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : []).flatMap((x) =>
+        typeof x === 'string' ? x.split(/['"]?\s*,\s*['"]?/).map((y) => y.replace(/['"]/g, '').trim()) : [x],
+      );
       let picked = [...new Set(arr.filter((x): x is string => typeof x === 'string' && ids.has(x)))];
       // "None yet" cannot sit alongside a real choice.
       if (picked.length > 1) picked = picked.filter((x) => x !== 'none');
