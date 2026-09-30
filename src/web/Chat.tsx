@@ -36,7 +36,21 @@ function isPlainTextAnswer(slot: Slot, t: string): boolean {
     slot.kind === 'text' &&
     t.length <= 80 &&
     !t.includes('?') &&
-    !/\b(not sure|don'?t know|no idea|skip|unsure|same as)\b/i.test(t)
+    !/\b(not sure|don'?t know|no idea|skip|unsure|same as)\b/i.test(t) &&
+    looksLikeLabel(t)
+  );
+}
+
+/**
+ * "Carematch" or "Registered Manager (Sue)" can be stored as typed. A sentence
+ * ("it's carematch, we're a home care company", "as CEO I review it") needs
+ * the model to pick out the answer.
+ */
+function looksLikeLabel(t: string): boolean {
+  return (
+    t.split(/\s+/).length <= 6 &&
+    !/[,;:!]|\.\s/.test(t) &&
+    !/\b(i|i'm|im|we|we're|were|our|us|my|me|its|it's|it|they|nobody|no one|none)\b/i.test(t)
   );
 }
 
